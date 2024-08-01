@@ -1,7 +1,9 @@
 package com.webfluxplayground.reactive_crud_api.controller;
 
 import com.webfluxplayground.reactive_crud_api.dto.CustomerDto;
+import com.webfluxplayground.reactive_crud_api.exception.ApplicationExceptions;
 import com.webfluxplayground.reactive_crud_api.service.CustomerService;
+import com.webfluxplayground.reactive_crud_api.validator.RequestValidator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,35 +27,35 @@ public class CustomerController {
 
     @GetMapping("/paginated")
     public Flux<CustomerDto> getAllCustomers(@RequestParam(defaultValue = "1") int pageNo,
-                                             @RequestParam(defaultValue = "5") int size){
+                                             @RequestParam(defaultValue = "5") int size) {
         return customerService.getAllCustomers(pageNo, size);
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<CustomerDto>> getCustomerById(@PathVariable int id) {
+    public Mono<CustomerDto> getCustomerById(@PathVariable int id) {
         return customerService.getCustomerById(id)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+                .switchIfEmpty(ApplicationExceptions.customerNotFoundMono(id));
     }
 
     @PostMapping
-    public Mono<ResponseEntity<CustomerDto>> saveCustomer(@RequestBody Mono<CustomerDto> mono) {
-        return customerService.saveCustomer(mono)
-                .map(ResponseEntity.status(HttpStatus.CREATED)::body);
+    public Mono<CustomerDto> saveCustomer(@RequestBody Mono<CustomerDto> mono) {
+        return mono.transform(RequestValidator.validate())
+                .as(customerService::saveCustomer);
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<CustomerDto>> updateCustomer(@PathVariable int id, @RequestBody CustomerDto customerDto) {
+    public Mono<CustomerDto> updateCustomer(@PathVariable int id, @RequestBody CustomerDto customerDto) {
+        RequestValidator.validate(customerDto);
         return customerService.updateCustomer(id, customerDto)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+                //.map(ResponseEntity::ok)
+                .switchIfEmpty(ApplicationExceptions.customerNotFoundMono(id));
     }
 
     @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Void>> deleteCustomerById(@PathVariable int id) {
+    public Mono<Void> deleteCustomerById(@PathVariable int id) {
         return customerService.deleteCustomerById(id)
                 .filter(b -> b)
-                .map(b -> ResponseEntity.status(HttpStatus.NO_CONTENT).<Void>build())
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+                .switchIfEmpty(ApplicationExceptions.customerNotFoundMono(id))
+                .then();
     }
 }

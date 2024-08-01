@@ -98,7 +98,8 @@ public class CustomerServiceTest {
                 .uri("/customers/11")
                 .exchange()
                 .expectStatus().isNotFound()
-                .expectBody().isEmpty();
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("Customer with [id=11] not found");
 
         // put req
         CustomerDto customerDto = new CustomerDto(0, "noel", "noel@gmail.com");
@@ -107,13 +108,45 @@ public class CustomerServiceTest {
                 .bodyValue(customerDto)
                 .exchange()
                 .expectStatus().isNotFound()
-                .expectBody().isEmpty();
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("Customer with [id=11] not found");
 
         // delete req
         webTestClient.delete()
                 .uri("/customers/11")
                 .exchange()
                 .expectStatus().isNotFound()
-                .expectBody().isEmpty();
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("Customer with [id=11] not found");
+    }
+
+    @Test
+    public void testInvalidInput(){
+        CustomerDto missingNameDto = new CustomerDto(0, null,"neol@gmail.com");
+        webTestClient.post()
+                .uri("/customers")
+                .bodyValue(missingNameDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("Name is required");
+
+        CustomerDto missingEmailDto = new CustomerDto(0, "neol",null);
+        webTestClient.post()
+                .uri("/customers")
+                .bodyValue(missingEmailDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("Email is required");
+
+        CustomerDto invalidEmailDto = new CustomerDto(0, "neol","neol.com");
+        webTestClient.put()
+                .uri("/customers/10")
+                .bodyValue(invalidEmailDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("Email is required");
     }
 }
