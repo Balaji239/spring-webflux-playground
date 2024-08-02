@@ -27,4 +27,11 @@ public class ApplicationExceptionHandler {
         problemDetail.setTitle("Invalid Input");
         return problemDetail;
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ProblemDetail handleException(RuntimeException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        problemDetail.setTitle("Internal server error. Please try after sometime");
+        return problemDetail;
+    }
 }

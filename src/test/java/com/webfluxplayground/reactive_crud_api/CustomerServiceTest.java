@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
@@ -148,5 +149,72 @@ public class CustomerServiceTest {
                 .expectStatus().is4xxClientError()
                 .expectBody()
                 .jsonPath("$.detail").isEqualTo("Email is required");
+    }
+
+    @Test
+    void testRequestWithoutAuthToken(){
+        webTestClient.get()
+                .uri("/customers")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        webTestClient.get()
+                .uri("/customers/5")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        CustomerDto customerDto = new CustomerDto(0, "neol","neol@gmail.com");
+        webTestClient.post()
+                .uri("/customers")
+                .bodyValue(customerDto)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        webTestClient.put()
+                .uri("/customers/10")
+                .bodyValue(customerDto)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        webTestClient.delete()
+                .uri("/customers/3")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void testRequestWithInvalidToken(){
+        webTestClient.get()
+                .uri("/customers")
+                .header("auth-token", "abcde")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        webTestClient.get()
+                .uri("/customers/5")
+                .header("auth-token", "12345")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        CustomerDto customerDto = new CustomerDto(0, "neol","neol@gmail.com");
+        webTestClient.post()
+                .uri("/customers")
+                .header("auth-token", "secreeet1")
+                .bodyValue(customerDto)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        webTestClient.put()
+                .uri("/customers/10")
+                .header("auth-token", "secrete12345")
+                .bodyValue(customerDto)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        webTestClient.delete()
+                .uri("/customers/3")
+                .header("auth-token", "token123")
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 }

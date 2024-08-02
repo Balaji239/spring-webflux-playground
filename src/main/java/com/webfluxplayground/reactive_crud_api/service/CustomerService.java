@@ -1,6 +1,7 @@
 package com.webfluxplayground.reactive_crud_api.service;
 
 import com.webfluxplayground.reactive_crud_api.dto.CustomerDto;
+import com.webfluxplayground.reactive_crud_api.entity.Customer;
 import com.webfluxplayground.reactive_crud_api.mapper.EntityDtoMapper;
 import com.webfluxplayground.reactive_crud_api.repository.CustomerRepository;
 import org.springframework.data.domain.PageRequest;
@@ -41,11 +42,28 @@ public class CustomerService {
                 .onErrorComplete()
                 .map(customer -> customerDto)
                 .map(EntityDtoMapper::toEntity)
-                .doOnNext(entity -> {
+                .flatMap(entity -> {
                     entity.setId(id);
-                    customerRepository.save(entity);
+                    return customerRepository.save(entity);
                 })
                 .map(EntityDtoMapper::toDto);
+
+        /*
+        * DON'T DO THIS WAY ❌
+        * here customerRepository.save() returns a Mono type i.e a publisher
+        * publisher code is executed only when it is subscribed. Since no one is subscribing to it here, the save will not happen
+        */
+        //return customerRepository.findById(id)
+        //        .onErrorComplete()
+        //        .map(customer -> customerDto)
+        //        .map(EntityDtoMapper::toEntity)
+        //        .doOnNext(entity -> {
+        //            System.out.println("hello..");
+        //            entity.setId(id);
+        //            System.out.println(entity);
+        //            customerRepository.save(entity);
+        //        })
+        //        .map(EntityDtoMapper::toDto);
     }
 
     public Mono<Boolean> deleteCustomerById(int id) {

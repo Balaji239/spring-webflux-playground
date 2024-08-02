@@ -47,7 +47,6 @@ public class CustomerController {
     public Mono<CustomerDto> updateCustomer(@PathVariable int id, @RequestBody CustomerDto customerDto) {
         RequestValidator.validate(customerDto);
         return customerService.updateCustomer(id, customerDto)
-                //.map(ResponseEntity::ok)
                 .switchIfEmpty(ApplicationExceptions.customerNotFoundMono(id));
     }
 
