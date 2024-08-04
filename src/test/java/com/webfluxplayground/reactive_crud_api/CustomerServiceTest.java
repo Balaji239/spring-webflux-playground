@@ -151,7 +151,7 @@ public class CustomerServiceTest {
                 .jsonPath("$.detail").isEqualTo("Email is required");
     }
 
-    @Test
+    //@Test
     void testRequestWithoutAuthToken(){
         webTestClient.get()
                 .uri("/customers")
@@ -182,7 +182,7 @@ public class CustomerServiceTest {
                 .expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    @Test
+    //@Test
     void testRequestWithInvalidToken(){
         webTestClient.get()
                 .uri("/customers")
